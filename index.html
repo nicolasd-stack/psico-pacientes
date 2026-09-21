@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pacientes - Yanet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-btn:hover {
+            background: #f9f9f9;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .warning {
+            background: #ffe;
+            color: #663;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        button.secondary:hover {
+            background: #e0e0e0;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 2px solid #ddd;
+            color: #555;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+            flex: 1;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .card p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .stat {
+            display: inline-block;
+            background: #f5f5f5;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .config-section {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .config-section h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+            }
+
+            .tab-btn {
+                white-space: nowrap;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            td, th {
+                padding: 8px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Gestión de Pacientes - Yanet</h1>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Panel</button>
+            <button class="tab-btn" onclick="switchTab('patients')">Pacientes</button>
+            <button class="tab-btn" onclick="switchTab('invoices')">Facturas</button>
+            <button class="tab-btn" onclick="switchTab('payments')">Pagos</button>
+            <button class="tab-btn" onclick="switchTab('config')">Configuración</button>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Panel de Control</h2>
+            <div style="margin-top: 20px;">
+                <div class="stat">
+                    <div class="stat-value" id="totalPatients">0</div>
+                    <div class="stat-label">Pacientes Activos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalInvoiced">$0</div>
+                    <div class="stat-label">Total Facturado</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalCollected">$0</div>
+                    <div class="stat-label">Total Cobrado</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="pendingAmount">$0</div>
+                    <div class="stat-label">Pendiente de Cobro</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Últimas Facturas</h3>
+            <div id="recentDiv"></div>
+        </div>
+
+        <!-- PATIENTS TAB -->
+        <div id="patients" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Pacientes</h2>
+                <button onclick="openPatientModal()">+ Agregar Paciente</button>
+            </div>
+            <div id="patientsDiv"></div>
+        </div>
+
+        <!-- INVOICES TAB -->
+        <div id="invoices" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Facturas</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="openInvoiceModal()">+ Manual</button>
+                </div>
+            </div>
+            <div id="invoicesDiv"></div>
+        </div>
+
+        <!-- PAYMENTS TAB -->
+        <div id="payments" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Pagos</h2>
+                <button onclick="openPaymentModal()">+ Registrar Pago</button>
+            </div>
+            <div id="paymentsDiv"></div>
+        </div>
+
+        <!-- CONFIG TAB -->
+        <div id="config" class="tab-content">
+            <h2>Configuración</h2>
+
+            <div class="config-section">
+                <h3>📊 Base de Datos</h3>
+                <p>Estado de conexión a Firebase.</p>
+                <div id="firebaseStatus" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="patientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Agregar Paciente</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Apellido</label>
+                    <input type="text" id="patientLastName" placeholder="Apellido">
+                </div>
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="patientFirstName" placeholder="Nombre">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Obra Social</label>
+                <input type="text" id="patientObraSocial" placeholder="Nombre de la obra social (opcional)">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>CUIT</label>
+                    <input type="text" id="patientCUIT" placeholder="XX-XXXXXXXX-X">
+                </div>
+                <div class="form-group">
+                    <label>Condición frente al IVA</label>
+                    <select id="patientIVACondition">
+                        <option value="">Seleccionar...</option>
+                        <option value="responsable_inscripto">Responsable Inscripto</option>
+                        <option value="monotributo">Monotributo</option>
+                        <option value="exento">Exento</option>
+                        <option value="no_responsable">No Responsable</option>
+                        <option value="consumidor_final">Consumidor Final</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="patientDescription" placeholder="Descripción del paciente (profesión, actividad, etc)"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Comentarios / Notas Clínicas</label>
+                <textarea id="patientComments" placeholder="Comentarios adicionales, observaciones clínicas, etc"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closePatientModal()">Cancelar</button>
+                <button onclick="addPatient()">Guardar Paciente</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Agregar Factura</div>
+            <div class="form-group">
+                <label>Paciente</label>
+                <select id="invoicePatient">
+                    <option value="">Seleccionar paciente...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="invoiceDate">
+            </div>
+            <div class="form-group">
+                <label>Monto ($)</label>
+                <input type="number" id="invoiceAmount" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="invoiceDescription" placeholder="Descripción del servicio"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Estado</label>
+                <select id="invoiceStatus">
+                    <option value="pending">Pendiente</option>
+                    <option value="paid">Pagado</option>
+                    <option value="partial">Parcial</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closeInvoiceModal()">Cancelar</button>
+                <button onclick="addInvoice()">Guardar Factura</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Registrar Pago</div>
+            <div class="form-group">
+                <label>Factura</label>
+                <select id="paymentInvoice">
+                    <option value="">Seleccionar factura...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Monto Pagado ($)</label>
+                <input type="number" id="paymentAmount" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="paymentDate">
+            </div>
+            <div class="form-group">
+                <label>Método</label>
+                <select id="paymentMethod">
+                    <option value="cash">Efectivo</option>
+                    <option value="transfer">Transferencia</option>
+                    <option value="check">Cheque</option>
+                    <option value="card">Tarjeta</option>
+                    <option value="other">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="paymentNotes" placeholder="Notas adicionales"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="secondary" onclick="closePaymentModal()">Cancelar</button>
+                <button onclick="addPayment()">Guardar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOfEp8UZFcJDuLubyf9jB6UnM8T1MrKHU",
+            authDomain: "control-dedicarnos-d28e1.firebaseapp.com",
+            projectId: "control-dedicarnos-d28e1",
+            storageBucket: "control-dedicarnos-d28e1.firebasestorage.app",
+            messagingSenderId: "608153785787",
+            appId: "1:608153785787:web:1c5d9335adf41c2d9b609e",
+            measurementId: "G-95RF61PHWW"
+        };
+
+        let db = null;
+        let auth = null;
+        let firebaseReady = false;
+
+        // Initialize Firebase after scripts load
+        window.addEventListener('load', function() {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+
+            auth.signInAnonymously().then(() => {
+                firebaseReady = true;
+                console.log("Firebase inicializado correctamente");
+                document.getElementById('firebaseStatus').innerHTML = '<p style="color: #3c3; font-weight: 500;">✓ Conectado a Firebase</p>';
+                initializeApp();
+            }).catch((error) => {
+                console.error("Error Firebase:", error);
+                document.getElementById('firebaseStatus').innerHTML = '<p style="color: #c33;">✗ Error: ' + error.message + '</p>';
+            });
+        });
+
+        function initializeApp() {
+            loadPatients();
+            loadInvoices();
+            loadPayments();
+            updateDashboard();
+
+            const today = new Date().toISOString().split('T')[0];
+            const invoiceDateInput = document.getElementById('invoiceDate');
+            const paymentDateInput = document.getElementById('paymentDate');
+            if (invoiceDateInput) invoiceDateInput.value = today;
+            if (paymentDateInput) paymentDateInput.value = today;
+        }
+
+        let patientsCache = [];
+        let invoicesCache = [];
+        let paymentsCache = [];
+
+        // SWITCH TABS
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // DASHBOARD
+        async function updateDashboard() {
+            if (!firebaseReady) return;
+
+            try {
+                const invoicesSnap = await db.collection('invoices').get();
+                const paymentsSnap = await db.collection('payments').get();
+
+                let totalInvoiced = 0;
+                let totalCollected = 0;
+
+                invoicesSnap.forEach(doc => {
+                    totalInvoiced += doc.data().amount || 0;
+                });
+
+                paymentsSnap.forEach(doc => {
+                    totalCollected += doc.data().amount || 0;
+                });
+
+                document.getElementById('totalPatients').textContent = patientsCache.length;
+                document.getElementById('totalInvoiced').textContent = '$' + totalInvoiced.toFixed(2);
+                document.getElementById('totalCollected').textContent = '$' + totalCollected.toFixed(2);
+                document.getElementById('pendingAmount').textContent = '$' + (totalInvoiced - totalCollected).toFixed(2);
+            } catch (error) {
+                console.error("Dashboard error:", error);
+            }
+        }
+
+        // PATIENTS
+        async function loadPatients() {
+            if (!firebaseReady) {
+                document.getElementById('patientsDiv').innerHTML = '<div class="loading">Conectando a Firebase...</div>';
+                return;
+            }
+
+            try {
+                const snap = await db.collection('patients').where('active', '==', true).get();
+                patientsCache = [];
+                let html = '';
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    patientsCache.push({ id: doc.id, ...data });
+                    const fullName = data.firstName + ' ' + data.lastName;
+                    html += `
+                        <div class="card">
+                            <h3>${fullName}</h3>
+                            ${data.obraSocial ? `<p><strong>Obra Social:</strong> ${data.obraSocial}</p>` : ''}
+                            ${data.cuit ? `<p><strong>CUIT:</strong> ${data.cuit}</p>` : ''}
+                            ${data.ivaCondition ? `<p><strong>Condición IVA:</strong> ${formatIVACondition(data.ivaCondition)}</p>` : ''}
+                            ${data.description ? `<p><strong>Descripción:</strong> ${data.description}</p>` : ''}
+                            ${data.comments ? `<p><strong>Comentarios:</strong> ${data.comments}</p>` : ''}
+                            <div class="actions" style="margin-top: 10px;">
+                                <button class="danger" onclick="deletePatient('${doc.id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if (snap.empty) {
+                    html = '<div class="empty-state"><p>No hay pacientes. Agrega uno para comenzar.</p></div>';
+                }
+
+                document.getElementById('patientsDiv').innerHTML = html;
+                updatePatientSelects();
+            } catch (error) {
+                console.error("Load patients error:", error);
+                document.getElementById('patientsDiv').innerHTML = '<div class="error">Error cargando pacientes</div>';
+            }
+        }
+
+        function updatePatientSelects() {
+            const selects = ['invoicePatient'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (select) {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">Seleccionar paciente...</option>';
+                    patientsCache.forEach(patient => {
+                        select.innerHTML += `<option value="${patient.id}">${patient.firstName} ${patient.lastName}</option>`;
+                    });
+                    select.value = currentValue;
+                }
+            });
+        }
+
+        function openPatientModal() {
+            document.getElementById('patientLastName').value = '';
+            document.getElementById('patientFirstName').value = '';
+            document.getElementById('patientObraSocial').value = '';
+            document.getElementById('patientCUIT').value = '';
+            document.getElementById('patientIVACondition').value = '';
+            document.getElementById('patientDescription').value = '';
+            document.getElementById('patientComments').value = '';
+            document.getElementById('patientModal').classList.add('show');
+        }
+
+        function closePatientModal() {
+            document.getElementById('patientModal').classList.remove('show');
+        }
+
+        async function addPatient() {
+            if (!firebaseReady) {
+                alert('Esperando conexión con Firebase...');
+                return;
+            }
+
+            const lastName = document.getElementById('patientLastName').value.trim();
+            const firstName = document.getElementById('patientFirstName').value.trim();
+            const obraSocial = document.getElementById('patientObraSocial').value.trim();
+            const cuit = document.getElementById('patientCUIT').value.trim();
+            const ivaCondition = document.getElementById('patientIVACondition').value;
+            const description = document.getElementById('patientDescription').value.trim();
+            const comments = document.getElementById('patientComments').value.trim();
+
+            if (!lastName || !firstName) {
+                alert('Por favor ingresa apellido y nombre');
+                return;
+            }
+
+            try {
+                await db.collection('patients').add({
+                    lastName,
+                    firstName,
+                    obraSocial,
+                    cuit,
+                    ivaCondition,
+                    description,
+                    comments,
+                    active: true,
+                    createdAt: new Date()
+                });
+
+                closePatientModal();
+                loadPatients();
+                alert('✓ Paciente guardado correctamente');
+            } catch (error) {
+                console.error("Add patient error:", error);
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deletePatient(id) {
+            if (!confirm('¿Estás seguro?')) return;
+
+            try {
+                await db.collection('patients').doc(id).update({
+                    active: false
+                });
+                loadPatients();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // INVOICES
+        async function loadInvoices() {
+            if (!firebaseReady) {
+                document.getElementById('invoicesDiv').innerHTML = '<div class="loading">Conectando a Firebase...</div>';
+                return;
+            }
+
+            try {
+                const snap = await db.collection('invoices').orderBy('date', 'desc').get();
+                invoicesCache = [];
+                let html = '';
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    invoicesCache.push({ id: doc.id, ...data });
+                    const patientName = patientsCache.find(p => p.id === data.patientId)?.firstName + ' ' + patientsCache.find(p => p.id === data.patientId)?.lastName || 'Desconocido';
+                    const statusBadge = {
+                        'pending': '⏳ Pendiente',
+                        'paid': '✓ Pagado',
+                        'partial': '◐ Parcial'
+                    };
+
+                    html += `
+                        <div class="card">
+                            <h3>${patientName}</h3>
+                            <p><strong>Fecha:</strong> ${formatDate(data.date)}</p>
+                            <p><strong>Monto:</strong> $${(data.amount || 0).toFixed(2)}</p>
+                            <p><strong>Estado:</strong> ${statusBadge[data.status] || data.status}</p>
+                            ${data.description ? `<p><strong>Descripción:</strong> ${data.description}</p>` : ''}
+                            <div class="actions" style="margin-top: 10px;">
+                                <button class="danger" onclick="deleteInvoice('${doc.id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if (snap.empty) {
+                    html = '<div class="empty-state"><p>No hay facturas.</p></div>';
+                }
+
+                document.getElementById('invoicesDiv').innerHTML = html;
+                updateInvoiceSelects();
+            } catch (error) {
+                console.error("Load invoices error:", error);
+                document.getElementById('invoicesDiv').innerHTML = '<div class="error">Error cargando facturas</div>';
+            }
+        }
+
+        function updateInvoiceSelects() {
+            const select = document.getElementById('paymentInvoice');
+            if (select) {
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">Seleccionar factura...</option>';
+                invoicesCache.forEach(invoice => {
+                    const patientName = patientsCache.find(p => p.id === invoice.patientId)?.firstName + ' ' + patientsCache.find(p => p.id === invoice.patientId)?.lastName || 'Desconocido';
+                    if (invoice.status !== 'paid') {
+                        select.innerHTML += `<option value="${invoice.id}">$${invoice.amount.toFixed(2)} - ${patientName}</option>`;
+                    }
+                });
+                select.value = currentValue;
+            }
+        }
+
+        function openInvoiceModal() {
+            document.getElementById('invoicePatient').value = '';
+            document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('invoiceAmount').value = '';
+            document.getElementById('invoiceDescription').value = '';
+            document.getElementById('invoiceStatus').value = 'pending';
+            document.getElementById('invoiceModal').classList.add('show');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.remove('show');
+        }
+
+        async function addInvoice() {
+            if (!firebaseReady) {
+                alert('Esperando conexión con Firebase...');
+                return;
+            }
+
+            const patientId = document.getElementById('invoicePatient').value;
+            const date = document.getElementById('invoiceDate').value;
+            const amount = parseFloat(document.getElementById('invoiceAmount').value);
+            const description = document.getElementById('invoiceDescription').value.trim();
+            const status = document.getElementById('invoiceStatus').value;
+
+            if (!patientId || !date || !amount || amount <= 0) {
+                alert('Por favor completa todos los campos requeridos');
+                return;
+            }
+
+            try {
+                await db.collection('invoices').add({
+                    patientId,
+                    date: new Date(date),
+                    amount,
+                    description,
+                    status,
+                    createdAt: new Date()
+                });
+
+                closeInvoiceModal();
+                loadInvoices();
+                updateDashboard();
+                alert('✓ Factura guardada');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deleteInvoice(id) {
+            if (!confirm('¿Estás seguro?')) return;
+
+            try {
+                await db.collection('invoices').doc(id).delete();
+                loadInvoices();
+                updateDashboard();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // PAYMENTS
+        async function loadPayments() {
+            if (!firebaseReady) {
+                document.getElementById('paymentsDiv').innerHTML = '<div class="loading">Conectando a Firebase...</div>';
+                return;
+            }
+
+            try {
+                const snap = await db.collection('payments').orderBy('date', 'desc').get();
+                paymentsCache = [];
+                let html = '';
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    paymentsCache.push({ id: doc.id, ...data });
+                    const invoice = invoicesCache.find(i => i.id === data.invoiceId);
+                    const patientName = invoice ? patientsCache.find(p => p.id === invoice.patientId)?.firstName + ' ' + patientsCache.find(p => p.id === invoice.patientId)?.lastName : 'Desconocido';
+
+                    html += `
+                        <div class="card">
+                            <h3>${patientName}</h3>
+                            <p><strong>Fecha:</strong> ${formatDate(data.date)}</p>
+                            <p><strong>Monto:</strong> $${(data.amount || 0).toFixed(2)}</p>
+                            <p><strong>Método:</strong> ${data.method || 'N/A'}</p>
+                            ${data.notes ? `<p><strong>Notas:</strong> ${data.notes}</p>` : ''}
+                            <div class="actions" style="margin-top: 10px;">
+                                <button class="danger" onclick="deletePayment('${doc.id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if (snap.empty) {
+                    html = '<div class="empty-state"><p>No hay pagos registrados.</p></div>';
+                }
+
+                document.getElementById('paymentsDiv').innerHTML = html;
+            } catch (error) {
+                console.error("Load payments error:", error);
+                document.getElementById('paymentsDiv').innerHTML = '<div class="error">Error cargando pagos</div>';
+            }
+        }
+
+        function openPaymentModal() {
+            document.getElementById('paymentInvoice').value = '';
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('paymentMethod').value = 'cash';
+            document.getElementById('paymentNotes').value = '';
+            document.getElementById('paymentModal').classList.add('show');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+        }
+
+        async function addPayment() {
+            if (!firebaseReady) {
+                alert('Esperando conexión con Firebase...');
+                return;
+            }
+
+            const invoiceId = document.getElementById('paymentInvoice').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const date = document.getElementById('paymentDate').value;
+            const method = document.getElementById('paymentMethod').value;
+            const notes = document.getElementById('paymentNotes').value.trim();
+
+            if (!invoiceId || !amount || amount <= 0 || !date) {
+                alert('Por favor completa todos los campos requeridos');
+                return;
+            }
+
+            try {
+                await db.collection('payments').add({
+                    invoiceId,
+                    amount,
+                    date: new Date(date),
+                    method,
+                    notes,
+                    createdAt: new Date()
+                });
+
+                closePaymentModal();
+                loadPayments();
+                loadInvoices();
+                updateDashboard();
+                alert('✓ Pago guardado');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deletePayment(id) {
+            if (!confirm('¿Estás seguro?')) return;
+
+            try {
+                await db.collection('payments').doc(id).delete();
+                loadPayments();
+                loadInvoices();
+                updateDashboard();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        // HELPERS
+        function formatDate(date) {
+            if (!date) return '-';
+            const d = date instanceof Date ? date : new Date(date);
+            return d.toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        }
+
+        function formatIVACondition(condition) {
+            const conditions = {
+                'responsable_inscripto': 'Responsable Inscripto',
+                'monotributo': 'Monotributo',
+                'exento': 'Exento',
+                'no_responsable': 'No Responsable',
+                'consumidor_final': 'Consumidor Final'
+            };
+            return conditions[condition] || condition;
+        }
+    </script>
+</body>
+</html>
